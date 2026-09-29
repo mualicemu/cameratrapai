@@ -72,7 +72,9 @@ class TestPrepareInstancesDict:
             "test_data/blank3.jpg",
             "test_data/domestic_cattle.jpg",
             "test_data/domestic_dog.jpg",
+            "test_data/gazelles_and_zebra.jpg",
             "test_data/human.jpg",
+            "test_data/human_and_dog.jpg",
             "test_data/ocelot.jpg",
             "test_data/vehicle.jpg",
         ]

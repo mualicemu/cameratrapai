@@ -36,6 +36,8 @@ AMERICAN_BLACK_BEAR = "436ddfdd-bc43-44c3-a25d-34671d3430a0;mammalia;carnivora;u
 DOMESTIC_CATTLE = "aca65aaa-8c6d-4b69-94de-842b08b13bd6;mammalia;artiodactyla;bovidae;bos;taurus;domestic cattle"
 DOMESTIC_DOG = "3d80f1d6-b1df-4966-9ff4-94053c7a902a;mammalia;carnivora;canidae;canis;familiaris;domestic dog"
 OCELOT = "22976d14-d424-4f18-a67a-d8e1689cefcc;mammalia;carnivora;felidae;leopardus;pardalis;ocelot"
+PLAINS_ZEBRA = "dd39bbd5-077c-482e-9d33-bd176116c870;mammalia;perissodactyla;equidae;equus;quagga;plains zebra"
+THOMSONS_GAZELLE = "dc5dbe17-a8ca-40a6-ac6a-3b6b1d63e6d6;mammalia;artiodactyla;bovidae;eudorcas;thomsonii;thomson's gazelle"
 
 # pylint: enable=line-too-long
 # fmt: on
@@ -97,7 +99,7 @@ class TestClassifier:
         img_green_w480_h480,  # output
     ) -> None:
 
-        assert classifier.preprocess(None) is None
+        assert classifier.preprocess(None) == []
 
         if classifier.model_info.type_ == "always_crop":
 
@@ -314,8 +316,18 @@ class TestClassifier:
                 DOMESTIC_DOG,
             ),
             (
+                "test_data/gazelles_and_zebra.jpg",
+                [BBox(0.2749, 0.4687, 0.2788, 0.3854)],
+                THOMSONS_GAZELLE,
+            ),
+            (
                 "test_data/human.jpg",
                 [BBox(0.7115, 0.4976, 0.0664, 0.2424)],
+                HUMAN,
+            ),
+            (
+                "test_data/human_and_dog.jpg",
+                [BBox(0.6964, 0.3965, 0.0771, 0.2521)],
                 HUMAN,
             ),
             (
@@ -345,6 +357,39 @@ class TestClassifier:
         assert classifications["scores"] == sorted(
             classifications["scores"], reverse=True
         )
+
+    def test_multi_bbox_classifications(self, classifier) -> None:
+        """Test that multiple bounding boxes produce distinct classifications
+        per crop.
+        """
+        if classifier.model_info.type_ != "always_crop":
+            pytest.skip(
+                "Full-image models do not classify individual crops distinctly."
+            )
+
+        # Test human and dog
+        filepath = "test_data/human_and_dog.jpg"
+        bboxes = [
+            BBox(0.6964, 0.3965, 0.0771, 0.2521),  # human
+            BBox(0.5229, 0.5646, 0.1307, 0.0965),  # domestic dog
+        ]
+        crops = classifier.preprocess(load_rgb_image(filepath), bboxes=bboxes)
+        pred = classifier.predict(filepath, crops)
+        assert len(pred["classifications_list"]) == 2
+        assert pred["classifications_list"][0]["classes"][0] == HUMAN
+        assert pred["classifications_list"][1]["classes"][0] == DOMESTIC_DOG
+
+        # Test gazelles and zebra
+        filepath = "test_data/gazelles_and_zebra.jpg"
+        bboxes = [
+            BBox(0.2749, 0.4687, 0.2788, 0.3854),  # thomson's gazelle
+            BBox(0.9678, 0.4538, 0.0322, 0.1029),  # plains zebra
+        ]
+        crops = classifier.preprocess(load_rgb_image(filepath), bboxes=bboxes)
+        pred = classifier.predict(filepath, crops)
+        assert len(pred["classifications_list"]) == 2
+        assert pred["classifications_list"][0]["classes"][0] == THOMSONS_GAZELLE
+        assert pred["classifications_list"][1]["classes"][0] == PLAINS_ZEBRA
 
     def test_target_species_batched_vs_non_batched(
         self, model_name: str, tmp_path

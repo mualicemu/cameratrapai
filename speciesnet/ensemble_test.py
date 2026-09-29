@@ -62,6 +62,7 @@ PUMA = "9c564562-9429-405c-8529-04cff7752282;mammalia;carnivora;felidae;puma;con
 PUMA_FC = "mammalia;carnivora;felidae;puma;concolor"
 SAND_CAT = "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat"
 SAND_CAT_FC = "mammalia;carnivora;felidae;felis;margarita"
+DOMESTIC_DOG = "3d80f1d6-b1df-4966-9ff4-94053c7a902a;mammalia;carnivora;canidae;canis;familiaris;domestic dog"
 
 # pylint: enable=line-too-long
 # fmt: on
@@ -445,6 +446,52 @@ class TestEnsemble:
         assert result[0]["prediction"] == "R"
         assert result[0]["prediction_score"] == 0.7
         assert result[0]["prediction_source"] == "mock"
+
+    def test_multi_combine_multiple_crops(self, ensemble) -> None:
+        """Test ensembling multiple classifications and detections using real
+        combiner.
+        """
+        filepath = "test_data/human_and_dog.jpg"
+        classifications_list = [
+            {
+                "classes": [HUMAN, Classification.BLANK],
+                "scores": [0.99, 0.01],
+            },
+            {
+                "classes": [DOMESTIC_DOG, Classification.BLANK],
+                "scores": [0.95, 0.05],
+            },
+        ]
+        detections = [
+            {
+                "category": "2",
+                "label": "human",
+                "conf": 0.94,
+                "bbox": [0.6964, 0.3965, 0.0771, 0.2521],
+            },
+            {
+                "category": "1",
+                "label": "animal",
+                "conf": 0.90,
+                "bbox": [0.5229, 0.5646, 0.1307, 0.0965],
+            },
+        ]
+        res = ensemble.combine(
+            filepaths=[filepath],
+            classifier_results={
+                filepath: {"classifications_list": classifications_list}
+            },
+            detector_results={
+                filepath: {"filepath": filepath, "detections": detections}
+            },
+            geolocation_results={filepath: {"country": "USA"}},
+        )[0]
+        preds = res["ensemble_predictions"]
+        assert len(preds) == 2
+        assert preds[0]["prediction"] == DOMESTIC_DOG
+        assert preds[0]["prediction_source"] == "classifier"
+        assert preds[1]["prediction"] == HUMAN
+        assert preds[1]["prediction_source"] == "detector"
 
     def test_complete_taxonomy(self, ensemble) -> None:
 
