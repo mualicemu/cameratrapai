@@ -203,7 +203,7 @@ class SpeciesNetEnsemble:
 
             # Most importantly, ensemble everything into predictions.
             if classifications_list is not None and detections is not None:
-                result["ensemble_predictions"] = self.prediction_combiner(
+                result["processed_classifications"] = self.prediction_combiner(
                     classifications_list=classifications_list,
                     detections=detections,
                     country=geolocation.get("country"),

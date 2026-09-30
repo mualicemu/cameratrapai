@@ -185,11 +185,11 @@ def guess_predictions_source(
     found_ensemble_results = False
 
     for prediction in predictions.values():
-        if "classifications" in prediction:
+        if "classifications" in prediction or "classifications_list" in prediction:
             found_classifications = True
         if "detections" in prediction:
             found_detections = True
-        if "prediction" in prediction:
+        if "prediction" in prediction or "processed_classifications" in prediction:
             found_ensemble_results = True
         if found_classifications and found_detections and not found_ensemble_results:
             return "invalid"

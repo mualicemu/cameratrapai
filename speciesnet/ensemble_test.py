@@ -295,7 +295,7 @@ class TestEnsemble:
                     }
                 ],
                 "detections": [],
-                "ensemble_predictions": [
+                "processed_classifications": [
                     {
                         "prediction": "XYZ",
                         "prediction_score": 0.4,
@@ -362,7 +362,7 @@ class TestEnsemble:
                         "bbox": [0.1, 0.2, 0.3, 0.4],
                     }
                 ],
-                "ensemble_predictions": [
+                "processed_classifications": [
                     {
                         "prediction": "R",
                         "prediction_score": 0.7,
@@ -388,7 +388,7 @@ class TestEnsemble:
                         "bbox": [0.1, 0.2, 0.3, 0.4],
                     }
                 ],
-                "ensemble_predictions": [
+                "processed_classifications": [
                     {
                         "prediction": "K",
                         "prediction_score": 0.9,
@@ -406,7 +406,7 @@ class TestEnsemble:
                     }
                 ],
                 "detections": [],
-                "ensemble_predictions": [
+                "processed_classifications": [
                     {
                         "prediction": "XYZ",
                         "prediction_score": 0.4,
@@ -440,7 +440,7 @@ class TestEnsemble:
             },
             detector_results={"d.jpg": {"detections": detections}},
             geolocation_results={"d.jpg": {"country": "COUNTRY_D"}},
-        )[0]["ensemble_predictions"]
+        )[0]["processed_classifications"]
 
         assert len(result) == 1
         assert result[0]["prediction"] == "R"
@@ -486,7 +486,7 @@ class TestEnsemble:
             },
             geolocation_results={filepath: {"country": "USA"}},
         )[0]
-        preds = res["ensemble_predictions"]
+        preds = res["processed_classifications"]
         assert len(preds) == 2
         assert preds[0]["prediction"] == DOMESTIC_DOG
         assert preds[0]["prediction_source"] == "classifier"
