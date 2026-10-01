@@ -272,6 +272,7 @@ class SpeciesNetClassifier:
         predictions = {}
 
         inference_filepaths = []
+        inference_num_crops = []
         batch_arr = []
 
         for filepath, imgs in zip(filepaths, imgs_list):
@@ -293,9 +294,15 @@ class SpeciesNetClassifier:
 
             predictions[filepath] = {"filepath": filepath, "classifications_list": []}
 
-            for img in valid_imgs:
+            if self.model_info.type_ == "full_image":
                 inference_filepaths.append(filepath)
-                batch_arr.append(img.arr / 255.0)
+                inference_num_crops.append(len(valid_imgs))
+                batch_arr.append(valid_imgs[0].arr / 255.0)
+            else:
+                for img in valid_imgs:
+                    inference_filepaths.append(filepath)
+                    inference_num_crops.append(1)
+                    batch_arr.append(img.arr / 255.0)
 
         if not batch_arr:
             return [predictions[fp] for fp in filepaths if fp in predictions]
@@ -310,8 +317,13 @@ class SpeciesNetClassifier:
         scores = torch.softmax(logits, dim=-1)
         scores, indices = torch.topk(scores, k=5, dim=-1)
 
-        for file_idx, (filepath, scores_arr, indices_arr) in enumerate(
-            zip(inference_filepaths, scores.numpy(), indices.numpy())
+        for file_idx, (filepath, num_crops, scores_arr, indices_arr) in enumerate(
+            zip(
+                inference_filepaths,
+                inference_num_crops,
+                scores.numpy(),
+                indices.numpy(),
+            )
         ):
 
             classification = {
@@ -329,7 +341,10 @@ class SpeciesNetClassifier:
                     }
                 )
 
-            predictions[filepath]["classifications_list"].append(classification)
+            for _ in range(num_crops):
+                predictions[filepath]["classifications_list"].append(
+                    {k: list(v) for k, v in classification.items()}
+                )
 
         return [
             predictions[filepath] for filepath in filepaths if filepath in predictions
